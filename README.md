@@ -1,1 +1,1 @@
-This is a collection of alpha telegram bots
+This is a collection of alpha telegram bots.
