@@ -1,1 +1,1 @@
-This is a Telegram bot to annotate photos
+This is a collection of alpha telegram bots
