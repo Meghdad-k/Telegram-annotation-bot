@@ -90,11 +90,12 @@ class InstagramCaptionBot:
     async def handle_chat(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle text messages for chat with streaming response"""
         message_text = update.message.text.lower()
-        
+
         # Check if the message appears to be an image generation request
-        if any(phrase in message_text for phrase in ["تصویر بساز", "عکس بساز", "create image", "generate image"]):
+        if any(phrase in message_text for phrase in ["تصویر بساز", "عکس بساز", "تصویر", 'بکش', 'نقاشی کن', "create an image", "generate an image", "draw an image", "draw a picture", "make an image", "paint"]):
             # Extract the prompt (remove the trigger phrases)
-            prompt = message_text
+            prompt = await self.translate_text_to_english(message_text)
+            print (prompt)
             for phrase in ["تصویر بساز", "عکس بساز", "create image", "generate image"]:
                 prompt = prompt.replace(phrase, "").strip()
             
@@ -142,7 +143,7 @@ class InstagramCaptionBot:
                 response = requests.post(
                     self.ollama_endpoint,
                     json={
-                        "model": "aya:35b",
+                        "model": "aya-expanse:8b",
                         "prompt": formatted_prompt,
                         "stream": True,
                         "options": {
@@ -228,6 +229,10 @@ class InstagramCaptionBot:
             return
 
         prompt = " ".join(context.args)
+
+        prompt = await self.translate_text_to_english(prompt)   
+        print (prompt)    
+
         status_message = await update.message.reply_text(GENERATING_IMAGE)
 
         try:
@@ -364,9 +369,8 @@ class InstagramCaptionBot:
             base64_image = base64.b64encode(photo_bytes).decode('utf-8')
             
             # Prepare the prompt for Instagram-style caption
-            prompt = """Generate a creative and engaging Instagram caption for this image. 
-            Make it personal and emotional, focusing on the story or feeling rather than just describing what's visible. 
-            Keep it short and natural, like something a real person would write. include hashtags."""
+            prompt = """Write a creative and engaging Instagram caption for this image 
+            make it sound personal and emotional with a tone of story telling. keep it short. include hashtags."""
             
             # Prepare the request for Ollama
             payload = {
@@ -404,7 +408,16 @@ class InstagramCaptionBot:
         except Exception as e:
             print(f"Translation error: {str(e)}")
             return text
-
+    async def translate_text_to_english(self, text):
+        """Translate text from Persian to English"""
+        try:
+            translator = GoogleTranslator(source='fa', target='en')
+            translated = translator.translate(text)
+            return translated if translated else text
+        except Exception as e:
+            print(f"Translation error: {str(e)}")
+            return text
+    
     def format_persian_caption(self, caption):
         """Format the Persian caption with emoji"""
         if not any(char in caption for char in ['✨', '💫', '🌟']):
